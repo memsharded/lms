@@ -98,6 +98,12 @@ private:
                                       type::ModuleConfig &config);
     void parseIncludes(pugi::xml_node rootNode, const std::string &currentFile,
                        LoadConfigFlag flag);
+
+    /**
+     * @brief Pause the framework execution if 'p' was pressed on stdin.
+     * The framework will then pause until 'r' was pressed.
+     */
+    void pauseIfRequested();
 };
 
 }  // namespace lms

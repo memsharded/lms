@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <unistd.h>
 #include "lms/extra/backtrace_formatter.h"
 #include "lms/logger.h"
 #include "lms/extra/time.h"
@@ -94,6 +95,8 @@ Framework::Framework(const ArgumentHandler &arguments) :
                 monitor.unwatchAll();
                 parseConfig(LoadConfigFlag::ONLY_MODULE_CONFIG);
             }
+
+            pauseIfRequested();
         }
     }
 }
@@ -546,4 +549,33 @@ void Framework::signal(int s) {
         break;
     }
 }
+
+void Framework::pauseIfRequested() {
+    fd_set rfds;
+
+    FD_ZERO(&rfds);
+    FD_SET(STDIN_FILENO, &rfds);
+
+    timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    int retval = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
+
+    if(retval == -1) {
+        perror("hasChangedFiles");
+    } else if(retval == 0) {
+        printf("select returned 0\n");
+    } else if (retval > 0) {
+        printf("select > 0\n");
+
+        if(FD_ISSET(STDIN_FILENO, &rfds)) {
+            if(getc(stdin) == 'p') {
+                logger.error() << "PAUSE";
+                pause();
+            }
+        }
+    }
+}
+
 }

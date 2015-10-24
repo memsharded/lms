@@ -12,9 +12,12 @@ bool Loader::checkSharedLibrary(const std::string &libpath) {
 	return false;
 }
 
-Module* Loader::load(module_entry& entry) {
-	logger.error("load") << "Not implemented on Win32";
-	return nullptr;
+void Loader::load(ModuleWrapper *entry) {
+    logger.error("load") << "Not implemented on Win32";
+}
+
+void Loader::unload(ModuleWrapper *entry) {
+    logger.error("unload") << "Not implemented on Win32";
 }
 
 }  // namespace lms

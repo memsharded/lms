@@ -1,6 +1,8 @@
 #include <iostream> // only for "Not Implemented" messages
 
 #ifdef _WIN32
+    #include <time.h>
+    #include <stdio.h>
 #elif __APPLE__
     #include <mach/mach.h>
     #include <mach/clock.h>
@@ -21,7 +23,13 @@ std::string currentTimeString() {
     time_t rawtime;
     time (&rawtime);
     tm *t = gmtime(&rawtime);
-    snprintf(str, sizeof(str), "%04i%02i%02i-%02i%02i%02i",
+
+#ifdef _WIN32
+    _snprintf
+#else
+    snprintf
+#endif
+    (str, sizeof(str), "%04i%02i%02i-%02i%02i%02i",
         t->tm_year+1900,
         t->tm_mon+1,
         t->tm_mday,

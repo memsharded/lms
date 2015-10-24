@@ -8,6 +8,10 @@
 #include "lms/logger.h"
 #include "tclap/CmdLine.h"
 
+#ifdef _MSC_VER
+#include <locale>
+#endif
+
 namespace lms {
 
 enum class RunLevel {
@@ -48,7 +52,13 @@ public:
 private:
     bool isNumber(const std::string& s) const {
         return !s.empty() && std::find_if(s.begin(),
-            s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
+            s.end(), [](char c) {
+#ifdef _MSC_VER
+            return !isdigit(c);
+#else
+            return !std::isdigit(c);
+#endif
+        }) == s.end();
     }
 };
 

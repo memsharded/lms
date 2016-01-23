@@ -74,7 +74,7 @@ DebugServerProfiler::DebugServerProfiler(DebugServer *server) :
 void DebugServerProfiler::onMarker(Profiler::Type type, Time now, std::string const& label) {
     std::uint8_t labelLen = std::min(label.size(), size_t(std::numeric_limits<std::uint8_t>::max()));
 
-    internal::DebugServer::Datagram datagram(DebugServer::MessageType::PROFILING, 10 + labelLen);
+    internal::DebugServer::Datagram datagram(DebugServer::ServerMessageType::PROFILING, 10 + labelLen);
 
     datagram.data()[0] = static_cast<std::uint8_t>(type);
     *reinterpret_cast<uint64_t*>(&datagram.data()[1]) = Endian::htobe(static_cast<uint64_t>(now.micros()));

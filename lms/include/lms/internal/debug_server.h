@@ -17,17 +17,23 @@ public:
     DebugServer();
     ~DebugServer();
 
-    enum class MessageType : std::uint8_t {
-        LOGGING = 1, PROFILING = 2
+    enum class ServerMessageType : std::uint8_t {
+        LOGGING = 0, PROFILING = 1
+    };
+
+    enum class ClientMessageType : std::uint8_t {
+        SET_SEND_MASK = 0
     };
 
     class Datagram {
     public:
-        Datagram(MessageType type, uint32_t messageLen);
+        Datagram(ServerMessageType type, uint32_t messageLen);
         uint8_t* data();
 
         const uint8_t* internal() const;
         size_t size() const;
+
+        ServerMessageType messageType() const;
     private:
         // 32 bit length + 8 bit message type
         static constexpr size_t HEADER_LEN = sizeof(uint32_t) + sizeof(uint8_t);
@@ -56,15 +62,18 @@ private:
 
     struct Client {
         Client() : valid(false), buffer(4096),
-                   bufferUsed(0), outOffset(0) {}
+                   bufferUsed(0), sendMask(0), outOffset(0) {}
 
         int sockfd;
         bool valid;
         std::vector<std::uint8_t> buffer;
         size_t bufferUsed;
 
+        uint8_t sendMask;
         std::queue<Datagram> outBuffer;
         size_t outOffset;
+
+        bool enabledSend(ServerMessageType type);
     };
 
     logging::Logger logger;
@@ -83,6 +92,8 @@ private:
     void processServer(int sockfd);
     void processClient(Client & client);
     void processOutqueue(Client &client);
+
+    static constexpr size_t HEADER_SIZE = 5;
 };
 
 }  // namespace internal

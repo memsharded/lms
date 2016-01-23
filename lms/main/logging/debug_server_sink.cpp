@@ -21,7 +21,7 @@ void DebugServerSink::sink(const Event &message) {
     // Format: Level + Tag Size + Tag + Message Size + Message
     uint32_t len = 3 + tagLen + textLen;
 
-    internal::DebugServer::Datagram datagram(internal::DebugServer::MessageType::LOGGING, len);
+    internal::DebugServer::Datagram datagram(internal::DebugServer::ServerMessageType::LOGGING, len);
 
     datagram.data()[0] = static_cast<std::uint8_t>(message.level);
     datagram.data()[1] = tagLen;

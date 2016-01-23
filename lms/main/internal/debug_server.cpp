@@ -11,7 +11,7 @@
 namespace lms {
 namespace internal {
 
-DebugServer::Datagram::Datagram(MessageType type, uint32_t messageLen) {
+DebugServer::Datagram::Datagram(ServerMessageType type, uint32_t messageLen) {
     m_data.resize(HEADER_LEN + messageLen);
     *reinterpret_cast<uint32_t*>(m_data.data()) = htonl(messageLen);
     m_data.data()[sizeof(uint32_t)] = static_cast<uint8_t>(type);
@@ -27,6 +27,15 @@ uint8_t* DebugServer::Datagram::data() {
 
 const uint8_t* DebugServer::Datagram::internal() const {
     return m_data.data();
+}
+
+DebugServer::ServerMessageType DebugServer::Datagram::messageType() const {
+    return static_cast<ServerMessageType>(m_data.data()[sizeof(uint32_t)]);
+}
+
+bool DebugServer::Client::enabledSend(ServerMessageType type) {
+    uint8_t shift = static_cast<uint8_t>(type);
+    return (sendMask & (1 << shift)) != 0;
 }
 
 DebugServer::DebugServer() : logger("DebugServer"), m_shutdown(false) {}
@@ -270,6 +279,28 @@ void DebugServer::processClient(Client & client) {
     } else {
         client.bufferUsed += retval;
     }
+
+    bool parsed = true;
+
+    while(parsed) {
+        parsed = false;
+        if(client.bufferUsed >= HEADER_SIZE) {
+            uint32_t msgLen = Endian::betoh(*reinterpret_cast<uint32_t*>(client.buffer.data()));
+            ClientMessageType msgType = static_cast<ClientMessageType>(client.buffer.data()[4]);
+
+            if(client.bufferUsed >= HEADER_SIZE + msgLen) {
+                switch(msgType) {
+                case ClientMessageType::SET_SEND_MASK :
+                    client.sendMask = client.buffer.data()[5];
+                    break;
+                }
+
+                client.buffer.erase(client.buffer.begin(), client.buffer.begin() + HEADER_SIZE + msgLen);
+                client.bufferUsed -= HEADER_SIZE + msgLen;
+                parsed = true;
+            }
+        }
+    }
 }
 
 void DebugServer::processOutqueue(Client & client) {
@@ -302,7 +333,9 @@ void DebugServer::processOutqueue(Client & client) {
 void DebugServer::broadcast(const Datagram &datagram) {
     std::unique_lock<std::mutex> lock(m_outMutex);
     for(auto& client : m_clients) {
-        client.outBuffer.push(datagram);
+        if(client.enabledSend(datagram.messageType())) {
+            client.outBuffer.push(datagram);
+        }
     }
 }
 

@@ -8,6 +8,7 @@
 #include <queue>
 
 #include "lms/logger.h"
+#include "protocol.h"
 
 namespace lms {
 namespace internal {
@@ -16,29 +17,6 @@ class DebugServer {
 public:
     DebugServer();
     ~DebugServer();
-
-    enum class ServerMessageType : std::uint8_t {
-        LOGGING = 0, PROFILING = 1
-    };
-
-    enum class ClientMessageType : std::uint8_t {
-        SET_SEND_MASK = 0
-    };
-
-    class Datagram {
-    public:
-        Datagram(ServerMessageType type, uint32_t messageLen);
-        uint8_t* data();
-
-        const uint8_t* internal() const;
-        size_t size() const;
-
-        ServerMessageType messageType() const;
-    private:
-        // 32 bit length + 8 bit message type
-        static constexpr size_t HEADER_LEN = sizeof(uint32_t) + sizeof(uint8_t);
-        std::vector<uint8_t> m_data;
-    };
 
     bool useUnix(std::string const& path);
 

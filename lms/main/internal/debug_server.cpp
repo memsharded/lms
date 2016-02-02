@@ -11,28 +11,6 @@
 namespace lms {
 namespace internal {
 
-DebugServer::Datagram::Datagram(ServerMessageType type, uint32_t messageLen) {
-    m_data.resize(HEADER_LEN + messageLen);
-    *reinterpret_cast<uint32_t*>(m_data.data()) = htonl(messageLen);
-    m_data.data()[sizeof(uint32_t)] = static_cast<uint8_t>(type);
-}
-
-size_t DebugServer::Datagram::size() const {
-    return m_data.size();
-}
-
-uint8_t* DebugServer::Datagram::data() {
-    return m_data.data() + HEADER_LEN;
-}
-
-const uint8_t* DebugServer::Datagram::internal() const {
-    return m_data.data();
-}
-
-DebugServer::ServerMessageType DebugServer::Datagram::messageType() const {
-    return static_cast<ServerMessageType>(m_data.data()[sizeof(uint32_t)]);
-}
-
 bool DebugServer::Client::enabledSend(ServerMessageType type) {
     uint8_t shift = static_cast<uint8_t>(type);
     return (sendMask & (1 << shift)) != 0;
@@ -292,6 +270,9 @@ void DebugServer::processClient(Client & client) {
                 switch(msgType) {
                 case ClientMessageType::SET_SEND_MASK :
                     client.sendMask = client.buffer.data()[5];
+                    break;
+                case ClientMessageType::COMMAND:
+                    // TODO
                     break;
                 }
 
